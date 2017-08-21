@@ -1,3 +1,4 @@
+#include <math.h>
 #include "kalman_filter.h"
 
 using Eigen::MatrixXd;
@@ -33,9 +34,9 @@ void KalmanFilter::Update(const VectorXd &z) {
     * update the state by using Kalman Filter equations
   */
   MatrixXd Ht = H_.transpose();
+  MatrixXd PHt = P_ * Ht;
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
   MatrixXd K = PHt * Si;
 
   // new estimate
@@ -53,8 +54,8 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   double range = sqrt( pow(x_[0],2) + pow(x_[1],2) );
   double bearing;
   double range_rate;
-  if (fabs(range > 0.001)){
-    bearing = atan(x_[1] / x_[0]);
+  if (fabs(range) > 0.001){
+    bearing = atan2(x_[1] , x_[0]);
     range_rate = ((x_[0] * x_[2] + x_[1] * x_[3]) /range); 
   } else {
     bearing = 0;
