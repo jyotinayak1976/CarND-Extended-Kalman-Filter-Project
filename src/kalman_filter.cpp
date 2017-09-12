@@ -54,12 +54,22 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   double range = sqrt( pow(x_[0],2) + pow(x_[1],2) );
   double bearing;
   double range_rate;
-  if (fabs(range) > 0.001){
-    bearing = atan2(x_[1] , x_[0]);
-    range_rate = ((x_[0] * x_[2] + x_[1] * x_[3]) /range); 
-  } else {
-    bearing = 0;
-    range_rate = 0;
+  //if (fabs(range) > 0.001){
+  //  bearing = atan2(x_[1] , x_[0]);
+  //  range_rate = ((x_[0] * x_[2] + x_[1] * x_[3]) /range); 
+  //} else {
+  //  bearing = 0;
+  //  range_rate = 0;
+  //}
+  bearing = atan2(x_[1] , x_[0]);
+  if (fabs(bearing) < 0.001){
+  	bearing = 0.001;
+  }
+  if (range < 0.001){
+  	range_rate = (x_[0] * x_[2] + x_[1] * x_[3]) /0.001;
+  }
+  else {
+  	range_rate = (x_[0] * x_[2] + x_[1] * x_[3]) /range;
   }
 
   MatrixXd z_pred(3,1);
@@ -67,12 +77,15 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.transpose();
+  MatrixXd Si = S.inverse();
   MatrixXd PHt = P_ * Ht;
   MatrixXd K = PHt * Si;
 
   // new estimate
   VectorXd y = z - z_pred;
+  //y(1) = fmod(y(1),M_PI);
+  while (y(1) > M_PI)  y(1) -= 2.*M_PI;
+  while (y(1) < -M_PI) y(1) += 2.*M_PI;
   x_ = x_ + (K * y);
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size,x_size);
